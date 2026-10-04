@@ -1,0 +1,16 @@
+CREATE TABLE destinations(
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT NULL,
+  latidude FLOAT(10, 8) NULL,
+  longitude FLOAT(10, 8) NULL,
+  radius FLOAT(10, 8),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_destinations_user
+      FOREIGN KEY (user_id) REFERENCES users(id)
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
+);

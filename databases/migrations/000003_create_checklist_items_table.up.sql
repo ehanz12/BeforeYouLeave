@@ -1,0 +1,13 @@
+CREATE TABLE checklist_items(
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  destination_id BIGINT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  is_required BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_ceklist_item_destinations 
+      FOREIGN KEY (destination_id) REFERENCES destinations(id)
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE
+);

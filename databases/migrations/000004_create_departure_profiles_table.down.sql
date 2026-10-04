@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS departure_profiles;
