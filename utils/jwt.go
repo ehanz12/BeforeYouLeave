@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateJWT(userID int64, role string) (string, error) {
+func GenerateJWT(userID uint64, email string) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		return "", errors.New("not found JWT_SECRET in .env")
@@ -16,7 +16,7 @@ func GenerateJWT(userID int64, role string) (string, error) {
 
 	claims := jwt.MapClaims{
 		"user_id": userID,
-		"role":    role,
+		"email":   email,
 		"exp":     time.Now().Add(3 * 365 * 24 * time.Hour).Unix(),
 	}
 
