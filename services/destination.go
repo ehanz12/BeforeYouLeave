@@ -13,10 +13,12 @@ func CreateDestination(req request.DestinationRequest, userID uint64) (models.De
 	if tx.Error != nil {
 		return models.Destination{}, errors.New("terjadi kesalahan sistem !")
 	}
-	if req.Name == "" || req.IsActive == nil {
-		return models.Destination{}, errors.New("nama dan active harus diisi !")
+	if req.Name == "" {
+		return models.Destination{}, errors.New("nama harus diisi !")
 	}
-	if err := databases.DB.Select("id", "name", "user_id").Where("name = ? AND user_id = ?", req.Name, userID).Error; err == nil {
+	var exits models.Destination
+	if err := tx.Select("id", "name", "user_id").Where("name = ? AND user_id = ?", req.Name, userID).First(&exits).Error; err == nil {
+		tx.Rollback()
 		return models.Destination{}, errors.New("nama sudah dipakai")
 	}
 
@@ -24,10 +26,17 @@ func CreateDestination(req request.DestinationRequest, userID uint64) (models.De
 		Name:        req.Name,
 		UserID:      userID,
 		Description: &req.Description,
-		Longitude:   &req.Latitude,
+		Longitude:   &req.Longitude,
 		Latitude:    &req.Latitude,
 		Radius:      &req.Radius,
-		IsActive:    *req.IsActive,
+		IsActive:    req.IsActive,
+	}
+	if err := tx.Create(&destination).Error; err != nil {
+		tx.Rollback()
+		return models.Destination{}, errors.New("terjadi kesalahan sistem")
+	}
+	if err := tx.Commit().Error; err != nil {
+		return models.Destination{}, errors.New("terjadi kesalahan sistem !")
 	}
 	return destination, nil
 }
