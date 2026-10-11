@@ -1,0 +1,420 @@
+{
+  "info": {
+    "_postman_id": "b1f0c2a4-7d3e-4a9b-9c1f-0a2b3c4d5e6f",
+    "name": "BeforeYouLeave",
+    "description": "Collection API Before You Leave (Fiber + GORM).\n\nBase URL default: http://localhost:3000/api\n\nAlur pemakaian:\n1. Jalankan Register (opsional).\n2. Jalankan Login -> access_token otomatis tersimpan ke variabel {{token}}.\n3. Jalankan endpoint lain (Bearer {{token}} sudah diatur di level collection).\n4. Create Destination -> id otomatis tersimpan ke variabel {{destination_id}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success true\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"08123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registrasi user baru. Wajib: name, email, password. Phone opsional."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "if (res.access_token) {",
+                  "    pm.collectionVariables.set(\"token\", res.access_token);",
+                  "    console.log(\"access_token tersimpan ke variabel token\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login user. access_token otomatis disimpan ke variabel {{token}} lewat test script."
+          }
+        },
+        {
+          "name": "Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Ambil data user yang sedang login. Membutuhkan Bearer token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Destination",
+      "item": [
+        {
+          "name": "Create Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set(\"destination_id\", res.data.id);",
+                  "    console.log(\"destination_id tersimpan: \" + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kantor\",\n  \"description\": \"Destinasi ke kantor setiap hari kerja\",\n  \"latitude\": -6.2,\n  \"longitude\": 106.816666,\n  \"radius\": 100,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                ""
+              ]
+            },
+            "description": "Membuat destinasi baru. id hasil create otomatis disimpan ke variabel {{destination_id}}."
+          }
+        },
+        {
+          "name": "List Destinations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/?search=&is_active=&start_date=&end_date=&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Pencarian berdasarkan nama/deskripsi"
+                },
+                {
+                  "key": "is_active",
+                  "value": "",
+                  "description": "Filter status aktif (true/false). Kosongkan untuk semua."
+                },
+                {
+                  "key": "start_date",
+                  "value": "",
+                  "description": "Filter tanggal awal (format sesuai service)"
+                },
+                {
+                  "key": "end_date",
+                  "value": "",
+                  "description": "Filter tanggal akhir (format sesuai service)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Halaman (default 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Jumlah per halaman (default 10, max 100)"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar destinasi milik user dengan pagination dan filter."
+          }
+        },
+        {
+          "name": "Detail Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}"
+              ]
+            },
+            "description": "Mendapatkan detail destinasi termasuk schedules, checklist_items, dan reminders."
+          }
+        },
+        {
+          "name": "Update Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kantor Baru\",\n  \"description\": \"Deskripsi diperbarui\",\n  \"latitude\": -6.21,\n  \"longitude\": 106.82,\n  \"radius\": 150,\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}"
+              ]
+            },
+            "description": "Update sebagian data destinasi. Semua field opsional, kirim hanya yang ingin diubah."
+          }
+        },
+        {
+          "name": "Delete Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}"
+              ]
+            },
+            "description": "Menghapus destinasi milik user."
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "destination_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
