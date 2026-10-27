@@ -23,6 +23,13 @@ func CreateDestination(req request.DestinationRequest, userID uint64) (models.De
 		return models.Destination{}, errors.New("nama sudah dipakai")
 	}
 
+	// Destination baru aktif secara default; field tidak dikirim berarti aktif,
+	// tapi is_active=false yang dikirim eksplisit harus dihormati.
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
 	destination := models.Destination{
 		Name:        req.Name,
 		UserID:      userID,
@@ -30,7 +37,7 @@ func CreateDestination(req request.DestinationRequest, userID uint64) (models.De
 		Longitude:   &req.Longitude,
 		Latitude:    &req.Latitude,
 		Radius:      &req.Radius,
-		IsActive:    req.IsActive,
+		IsActive:    isActive,
 	}
 	if err := tx.Create(&destination).Error; err != nil {
 		tx.Rollback()

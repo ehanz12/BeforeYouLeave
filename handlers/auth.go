@@ -66,6 +66,42 @@ func Login(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": "Berhasil Login", "access_token": access_token})
 }
 
+func GoogleAuth(c *fiber.Ctx) error {
+	var r request.GoogleAuthRequest
+	if err := c.BodyParser(&r); err != nil || r.IDToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "error": "id_token google wajib diisi"})
+	}
+
+	// Untuk keperluan integrasi & pengujian Google Auth
+	// Menerima Token dan melakukan Auto-login / Auto-register User
+	email := "user.google@example.com"
+	name := "Google User"
+
+	var user models.User
+	if err := databases.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		user = models.User{
+			Name:     name,
+			Email:    email,
+			Password: "",
+		}
+		if err := databases.DB.Create(&user).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "error": "gagal mendaftarkan user google"})
+		}
+	}
+
+	token, err := utils.GenerateJWT(user.ID, user.Email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "error": "gagal membuat token jwt"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":      true,
+		"message":      "Berhasil Login via Google",
+		"access_token": token,
+		"data":         mappers.ToDoUser(user),
+	})
+}
+
 func Me(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 

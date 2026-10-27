@@ -1,12 +1,15 @@
 package request
 
+// IsActive harus pointer: kalau bertipe bool biasa, field yang tidak dikirim
+// jadi false dan destination ter-create dalam keadaan libur, jadi tidak ada
+// reminder yang pernah di-generate. Pointer membedakan "tidak diisi" dari false.
 type DestinationRequest struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	Radius      float64 `json:"radius"`
-	IsActive    bool    `json:"is_active"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Latitude    float64  `json:"latitude"`
+	Longitude   float64  `json:"longitude"`
+	Radius      float64  `json:"radius"`
+	IsActive    *bool    `json:"is_active"`
 }
 
 type UpdateDestinationRequest struct {

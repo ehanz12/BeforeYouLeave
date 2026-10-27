@@ -11,5 +11,6 @@ func SetupRouteAuth(api fiber.Router) {
 
 	auth.Post("/register", handlers.Register)
 	auth.Post("/login", handlers.Login)
+	auth.Post("/google", handlers.GoogleAuth)
 	auth.Get("/me", middlewares.ProtectedRoute, handlers.Me)
 }

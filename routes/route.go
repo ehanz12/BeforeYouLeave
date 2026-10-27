@@ -6,4 +6,7 @@ func SetupRoute(app *fiber.App) {
 	api := app.Group("/api")
 	SetupRouteAuth(api)
 	SetupDestination(api)
+	SetupChecklistItem(api)
+	SetupSchedule(api)
+	SetupReminder(api)
 }

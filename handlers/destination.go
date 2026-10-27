@@ -20,9 +20,33 @@ func parseDestinationID(c *fiber.Ctx) (uint64, *fiber.Error) {
 	return id, nil
 }
 
+// parseDestinationParam = untuk route nested yang pakai :destinationId.
+func parseDestinationParam(c *fiber.Ctx) (uint64, *fiber.Error) {
+	id, err := strconv.ParseUint(c.Params("destinationId"), 10, 64)
+	if err != nil {
+		return 0, fiber.NewError(fiber.StatusBadRequest, "destinationId harus berupa angka !")
+	}
+	return id, nil
+}
+
 func getUserID(c *fiber.Ctx) (uint64, bool) {
 	userID, ok := c.Locals("user_id").(uint64)
 	return userID, ok
+}
+
+// destinationContext = ambil destinationId + userID sekaligus dari request.
+// Dipakai semua handler yang menempel pada sebuah destination (items, schedules).
+func destinationContext(c *fiber.Ctx) (destinationID, userID uint64, ferr *fiber.Error) {
+	destinationID, ferr = parseDestinationParam(c)
+	if ferr != nil {
+		return 0, 0, ferr
+	}
+	var ok bool
+	userID, ok = getUserID(c)
+	if !ok {
+		return 0, 0, fiber.NewError(fiber.StatusUnauthorized, "unauthorized !")
+	}
+	return destinationID, userID, nil
 }
 
 func CreateDestination(c *fiber.Ctx) error {

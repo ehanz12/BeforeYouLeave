@@ -36,27 +36,12 @@ func ToDestinationResponse(d models.Destination) response.Destination {
 func ToDestinationDetailResponse(d models.Destination) response.DestinationDetail {
 	schedules := make([]response.Schedule, 0, len(d.Schedules))
 	for _, s := range d.Schedules {
-		schedules = append(schedules, response.Schedule{
-			ID:            s.ID,
-			DayOfWeek:     s.DayOfWeek,
-			DepartureTime: s.DepartureTime,
-			RemindDMinus:  s.RemindDMinus,
-			RemindTime:    s.RemindTime,
-			IsActive:      s.IsActive,
-			CreatedAt:     s.CreatedAt,
-			UpdatedAt:     s.UpdatedAt,
-		})
+		schedules = append(schedules, ToScheduleResponse(s))
 	}
 
 	items := make([]response.ChecklistItem, 0, len(d.ChecklistItems))
 	for _, i := range d.ChecklistItems {
-		items = append(items, response.ChecklistItem{
-			ID:         i.ID,
-			Name:       i.Name,
-			IsRequired: i.IsRequired,
-			CreatedAt:  i.CreatedAt,
-			UpdatedAt:  i.UpdatedAt,
-		})
+		items = append(items, ToChecklistItemResponse(i))
 	}
 
 	reminders := make([]response.Reminder, 0, len(d.Reminders))

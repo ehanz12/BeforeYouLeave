@@ -22,14 +22,21 @@ const (
 // DestinationSchedule = 1 row untuk 1 hari aktif.
 // Contoh: Sekolah Senin-Jumat = 5 rows, tanpa row Minggu = Minggu libur, tanpa reminder.
 // Jam boleh beda tiap hari (Senin 07:00, Jumat 06:30).
+// CATATAN: jangan pakai tag `default:` di struct GORM untuk kolom ini.
+//
+// GORM melewati field ber-tag default saat nilainya zero-value, sehingga INSERT
+// akan pakai DEFAULT database dan nilai yang diminta user hilang diam-diam.
+// Contoh fatal: remind_d_minus=0 (hari-H) jadi 1 (H-1), is_active=false jadi true.
+// Kolom di database tetap punya DEFAULT, cukup untuk insert SQL langsung.
+// Default aplikasi ini sudah di-resolve di services/schedule.go buildScheduleInput.
 type DestinationSchedule struct {
 	ID            uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
 	DestinationID uint64    `gorm:"not null;uniqueIndex:uq_schedules_destination_day,priority:1;index:idx_schedules_lookup,priority:1" json:"destination_id"`
 	DayOfWeek     int8      `gorm:"type:tinyint;not null;uniqueIndex:uq_schedules_destination_day,priority:2;index:idx_schedules_lookup,priority:2;check:day_of_week BETWEEN 0 AND 6" json:"day_of_week"`
 	DepartureTime string    `gorm:"type:time;not null" json:"departure_time"` // "07:00:00"
-	RemindDMinus  int8      `gorm:"type:tinyint;not null;default:1" json:"remind_d_minus"`
+	RemindDMinus  int8      `gorm:"type:tinyint;not null" json:"remind_d_minus"`
 	RemindTime    string    `gorm:"type:time;not null" json:"remind_time"` // "20:00:00"
-	IsActive      bool      `gorm:"not null;default:true;index:idx_schedules_lookup,priority:3" json:"is_active"`
+	IsActive      bool      `gorm:"not null;index:idx_schedules_lookup,priority:3" json:"is_active"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 

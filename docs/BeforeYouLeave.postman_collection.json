@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b1f0c2a4-7d3e-4a9b-9c1f-0a2b3c4d5e6f",
     "name": "BeforeYouLeave",
-    "description": "Collection API Before You Leave (Fiber + GORM).\n\nBase URL default: http://localhost:3000/api\n\nAlur pemakaian:\n1. Jalankan Register (opsional).\n2. Jalankan Login -> access_token otomatis tersimpan ke variabel {{token}}.\n3. Jalankan endpoint lain (Bearer {{token}} sudah diatur di level collection).\n4. Create Destination -> id otomatis tersimpan ke variabel {{destination_id}}.",
+    "description": "Collection API Before You Leave (Fiber + GORM).\n\nBase URL default: http://localhost:3000/api\n\nAlur pemakaian:\n1. Jalankan Register (opsional) atau Login -> access_token otomatis tersimpan ke variabel {{token}}.\n2. Jalankan Create Destination -> id otomatis tersimpan ke variabel {{destination_id}}.\n3. Buat Checklist Item di folder \"Checklist Item\" (nested ke destination).\n4. Buat Jadwal di folder \"Schedule\" bisa pakai POST per hari atau PUT untuk replace-all (set sepekan sekaligus).\n5. Worker akan generate reminder otomatis (generator tiap 60 menit, dispatcher tiap 5 menit). Atau bisa diuji via test.\n6. Cek Reminder di folder \"Reminder\", tandai baca/skip, atau centang item per reminder.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -368,6 +368,1235 @@
           }
         }
       ]
+    },
+    {
+      "name": "Checklist Item",
+      "item": [
+        {
+          "name": "Create Checklist Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set(\"item_id\", res.data.id);",
+                  "    pm.collectionVariables.set(\"checklist_item_id\", res.data.id);",
+                  "    console.log(\"item_id tersimpan: \" + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buku\",\n  \"is_required\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/items",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "items"
+              ]
+            },
+            "description": "Membuat checklist item (template barang) untuk destinasi. Nama harus unik per destinasi."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Buku\",\n  \"is_required\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil membuat checklist item !\",\n  \"data\": {\n    \"id\": 1,\n    \"destination_id\": 1,\n    \"name\": \"Buku\",\n    \"is_required\": true,\n    \"created_at\": \"2026-10-16T08:00:00+07:00\",\n    \"updated_at\": \"2026-10-16T08:00:00+07:00\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request - Nama Sudah Dipakai",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Buku\",\n  \"is_required\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"nama sudah dipakai\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Checklist Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/items?search=&is_required=&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "items"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Pencarian berdasarkan nama item"
+                },
+                {
+                  "key": "is_required",
+                  "value": "",
+                  "description": "Filter wajib/tidak (true/false)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Halaman (default 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Jumlah per halaman (default 10, max 100)"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar checklist item milik destinasi dengan pagination dan filter."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items?page=1&limit=10",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil mendapatkan list checklist item !\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"destination_id\": 1,\n      \"name\": \"Buku\",\n      \"is_required\": true,\n      \"created_at\": \"2026-10-16T08:00:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:00:00+07:00\"\n    },\n    {\n      \"id\": 2,\n      \"destination_id\": 1,\n      \"name\": \"Dompet\",\n      \"is_required\": true,\n      \"created_at\": \"2026-10-16T08:01:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:01:00+07:00\"\n    }\n  ],\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 10,\n    \"total\": 2,\n    \"total_pages\": 1\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Checklist Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/items/{{item_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "items",
+                "{{item_id}}"
+              ]
+            },
+            "description": "Mendapatkan detail satu checklist item."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil mendapatkan checklist item !\",\n  \"data\": {\n    \"id\": 1,\n    \"destination_id\": 1,\n    \"name\": \"Buku\",\n    \"is_required\": true,\n    \"created_at\": \"2026-10-16T08:00:00+07:00\",\n    \"updated_at\": \"2026-10-16T08:00:00+07:00\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items/999",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items",
+                    "999"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"item tidak ditemukan !\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Checklist Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buku Tulis\",\n  \"is_required\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/items/{{item_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "items",
+                "{{item_id}}"
+              ]
+            },
+            "description": "Update sebagian data checklist item. Semua field opsional."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Buku Tulis\",\n  \"is_required\": false\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil mengupdate checklist item !\",\n  \"data\": {\n    \"id\": 1,\n    \"destination_id\": 1,\n    \"name\": \"Buku Tulis\",\n    \"is_required\": false,\n    \"created_at\": \"2026-10-16T08:00:00+07:00\",\n    \"updated_at\": \"2026-10-16T08:05:00+07:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Checklist Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/items/{{item_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "items",
+                "{{item_id}}"
+              ]
+            },
+            "description": "Menghapus checklist item milik destinasi."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/items/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "items",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil menghapus checklist item !\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "item": [
+        {
+          "name": "Create Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"day_of_week\": 1,\n  \"departure_time\": \"07:00\",\n  \"remind_time\": \"06:00\",\n  \"remind_d_minus\": 1,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/schedules",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "schedules"
+              ]
+            },
+            "description": "Membuat jadwal per hari. day_of_week: 0=Minggu,1=Senin,...,6=Sabtu. remind_d_minus: 1=H-1 malam (default), 0=hari-H (remind_time harus < departure_time). Waktu bisa \"HH:MM\" atau \"HH:MM:SS\". Satu destinasi hanya boleh punya 1 jadwal per hari."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day_of_week\": 1,\n  \"departure_time\": \"07:00\",\n  \"remind_time\": \"06:00\",\n  \"remind_d_minus\": 1,\n  \"is_active\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil membuat jadwal !\",\n  \"data\": {\n    \"id\": 1,\n    \"destination_id\": 1,\n    \"day_of_week\": 1,\n    \"departure_time\": \"07:00:00\",\n    \"remind_d_minus\": 1,\n    \"remind_time\": \"06:00:00\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-16T08:00:00+07:00\",\n    \"updated_at\": \"2026-10-16T08:00:00+07:00\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request - Hari-H Order",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day_of_week\": 1,\n  \"departure_time\": \"07:00\",\n  \"remind_time\": \"08:00\",\n  \"remind_d_minus\": 0,\n  \"is_active\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"remind_time (08:00:00) harus lebih awal dari departure_time (07:00:00) saat remind_d_minus = 0 (hari-H) !\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Schedules",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/schedules?is_active=&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "schedules"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "",
+                  "description": "Filter status aktif (true/false)"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar jadwal mingguan milik destinasi."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil mendapatkan list jadwal !\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"destination_id\": 1,\n      \"day_of_week\": 1,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:00:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:00:00+07:00\"\n    },\n    {\n      \"id\": 2,\n      \"destination_id\": 1,\n      \"day_of_week\": 2,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:01:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:01:00+07:00\"\n    }\n  ],\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 10,\n    \"total\": 2,\n    \"total_pages\": 1\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Replace All Schedules",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schedules\": [\n    {\"day_of_week\": 1, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 2, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 3, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 4, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 5, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true}\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/schedules",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "schedules"
+              ]
+            },
+            "description": "Set jadwal sepekan sekaligus. Replace-all dalam satu transaksi (all-or-nothing). Cocok untuk form yang mencentang hari aktif."
+          },
+          "response": [
+            {
+              "name": "200 OK - Senin Jumat",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"schedules\": [\n    {\"day_of_week\": 1, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 2, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 3, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 4, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true},\n    {\"day_of_week\": 5, \"departure_time\": \"07:00\", \"remind_time\": \"06:00\", \"remind_d_minus\": 1, \"is_active\": true}\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil menyimpan jadwal mingguan !\",\n  \"data\": [\n    {\n      \"id\": 10,\n      \"destination_id\": 1,\n      \"day_of_week\": 1,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:10:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:10:00+07:00\"\n    },\n    {\n      \"id\": 11,\n      \"destination_id\": 1,\n      \"day_of_week\": 2,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:10:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:10:00+07:00\"\n    },\n    {\n      \"id\": 12,\n      \"destination_id\": 1,\n      \"day_of_week\": 3,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:10:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:10:00+07:00\"\n    },\n    {\n      \"id\": 13,\n      \"destination_id\": 1,\n      \"day_of_week\": 4,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:10:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:10:00+07:00\"\n    },\n    {\n      \"id\": 14,\n      \"destination_id\": 1,\n      \"day_of_week\": 5,\n      \"departure_time\": \"07:00:00\",\n      \"remind_d_minus\": 1,\n      \"remind_time\": \"06:00:00\",\n      \"is_active\": true,\n      \"created_at\": \"2026-10-16T08:10:00+07:00\",\n      \"updated_at\": \"2026-10-16T08:10:00+07:00\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"schedules\": [\n    {\"day_of_week\": 1, \"departure_time\": \"07:00\", \"remind_time\": \"08:00\", \"remind_d_minus\": 0, \"is_active\": true}\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"schedules[0]: remind_time (08:00:00) harus lebih awal dari departure_time (07:00:00) saat remind_d_minus = 0 (hari-H) !\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) { pm.collectionVariables.set(\"schedule_id\", res.data.id); console.log(\"schedule_id tersimpan: \" + res.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "schedules",
+                "{{schedule_id}}"
+              ]
+            },
+            "description": "Mendapatkan detail jadwal."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil mendapatkan jadwal !\",\n  \"data\": {\n    \"id\": 1,\n    \"destination_id\": 1,\n    \"day_of_week\": 1,\n    \"departure_time\": \"07:00:00\",\n    \"remind_d_minus\": 1,\n    \"remind_time\": \"06:00:00\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-16T08:00:00+07:00\",\n    \"updated_at\": \"2026-10-16T08:00:00+07:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remind_time\": \"05:30\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "schedules",
+                "{{schedule_id}}"
+              ]
+            },
+            "description": "Update sebagian jadwal. Field opsional."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"remind_time\": \"05:30\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil mengupdate jadwal !\",\n  \"data\": {\n    \"id\": 1,\n    \"destination_id\": 1,\n    \"day_of_week\": 1,\n    \"departure_time\": \"07:00:00\",\n    \"remind_d_minus\": 1,\n    \"remind_time\": \"05:30:00\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-16T08:00:00+07:00\",\n    \"updated_at\": \"2026-10-16T08:15:00+07:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/destination/{{destination_id}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destination",
+                "{{destination_id}}",
+                "schedules",
+                "{{schedule_id}}"
+              ]
+            },
+            "description": "Menghapus jadwal per hari. Reminder yang sudah ada tidak otomatis hilang, tapi tidak akan digenerate ulang."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/destination/1/schedules/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "destination",
+                    "1",
+                    "schedules",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"berhasil menghapus jadwal !\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reminder",
+      "item": [
+        {
+          "name": "List Reminders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reminder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reminder"
+              ]
+            },
+            "description": "List reminder milik user."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/reminder",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "reminder"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"berhasil mendapatkan list reminder !\", \"data\": [], \"meta\": {\"page\": 1, \"limit\": 10, \"total\": 0, \"total_pages\": 0}}"
+            }
+          ]
+        },
+        {
+          "name": "Detail Reminder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reminder/{{reminder_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reminder",
+                "{{reminder_id}}"
+              ]
+            },
+            "description": "Detail reminder."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/reminder/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "reminder",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"berhasil mendapatkan reminder !\", \"data\": {\"id\": 1}}"
+            }
+          ]
+        },
+        {
+          "name": "Mark as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reminder/{{reminder_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reminder",
+                "{{reminder_id}}",
+                "read"
+              ]
+            },
+            "description": "Tandai baca."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/reminder/1/read",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "reminder",
+                    "1",
+                    "read"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"reminder ditandai sudah dibaca !\", \"data\": {}}"
+            }
+          ]
+        },
+        {
+          "name": "Skip Reminder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reminder/{{reminder_id}}/skip",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reminder",
+                "{{reminder_id}}",
+                "skip"
+              ]
+            },
+            "description": "Skip reminder."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/reminder/1/skip",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "reminder",
+                    "1",
+                    "skip"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"reminder dibatalkan !\", \"data\": {}}"
+            }
+          ]
+        },
+        {
+          "name": "Update Item Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"is_checked\": true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/reminder/{{reminder_id}}/items/{{checklist_item_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reminder",
+                "{{reminder_id}}",
+                "items",
+                "{{checklist_item_id}}"
+              ]
+            },
+            "description": "Centang item."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"is_checked\": true}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/reminder/1/items/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "reminder",
+                    "1",
+                    "items",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"berhasil update centangan !\", \"data\": {}}"
+            }
+          ]
+        }
+      ]
     }
   ],
   "auth": {
@@ -413,6 +1642,26 @@
     },
     {
       "key": "destination_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schedule_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reminder_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checklist_item_id",
       "value": "",
       "type": "string"
     }
