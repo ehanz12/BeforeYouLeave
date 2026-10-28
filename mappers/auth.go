@@ -6,10 +6,16 @@ import (
 )
 
 func ToDoUser(u models.User) response.AuthResponse {
+	// Phone nullable (mis. user Google yang tidak mengisi nomor telepon).
+	// Jangan dereference langsung supaya tidak panic.
+	var phone string
+	if u.Phone != nil {
+		phone = *u.Phone
+	}
 	return response.AuthResponse{
 		ID:    u.ID,
 		Name:  u.Name,
 		Email: u.Email,
-		Phone: *u.Phone,
+		Phone: phone,
 	}
 }

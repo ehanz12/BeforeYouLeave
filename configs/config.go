@@ -34,6 +34,9 @@ type Config struct {
 	// ReminderDispatchIntervalMin = seberapa sering pending -> sent.
 	ReminderDispatchIntervalMin int
 	GoogleClientID              string
+	// JWTSecret = kunci penandatangan token. Wajib di-set, kalau kosong
+	// login akan gagal saat membuat token.
+	JWTSecret string
 }
 
 // variable dari struct
@@ -47,12 +50,12 @@ func LoadEnv() {
 
 	// instalasi untuk config
 	AppConfig = &Config{
-		Port:                 os.Getenv("PORT"),
-		DBName:               os.Getenv("DB_NAME"),
-		DBPassword:           os.Getenv("DB_PASSWORD"),
-		DBUser:               os.Getenv("DB_USER"),
-		DBHost:               os.Getenv("DB_HOST"),
-		DBPort:               os.Getenv("DB_PORT"),
+		Port:                        os.Getenv("PORT"),
+		DBName:                      os.Getenv("DB_NAME"),
+		DBPassword:                  os.Getenv("DB_PASSWORD"),
+		DBUser:                      os.Getenv("DB_USER"),
+		DBHost:                      os.Getenv("DB_HOST"),
+		DBPort:                      os.Getenv("DB_PORT"),
 		DBMaxOpenConns:              getEnvInt("DB_MAX_OPEN_CONNS", 5),
 		DBMaxIdleConns:              getEnvInt("DB_MAX_IDLE_CONNS", 3),
 		DBConnMaxLifetimeMin:        getEnvInt("DB_CONN_MAX_LIFETIME_MIN", 5),
@@ -62,6 +65,13 @@ func LoadEnv() {
 		ReminderGenerateIntervalMin: getEnvInt("REMINDER_GENERATE_INTERVAL_MIN", 60),
 		ReminderDispatchIntervalMin: getEnvInt("REMINDER_DISPATCH_INTERVAL_MIN", 5),
 		GoogleClientID:              os.Getenv("GOOGLE_CLIENT_ID"),
+		JWTSecret:                   os.Getenv("JWT_SECRET"),
+	}
+
+	// Gagal cepat: tanpa JWT_SECRET, register tetap jalan tapi login selalu
+	// gagal di tengah proses. Lebih baik server menolak start sejak awal.
+	if AppConfig.JWTSecret == "" {
+		log.Fatal("⚠️ JWT_SECRET wajib di-set (lihat .env.example)")
 	}
 }
 

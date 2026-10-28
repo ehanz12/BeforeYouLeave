@@ -14,6 +14,7 @@ import (
 	"github.com/ehanz12/BeforeYouLeave/workers"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 func main() {
@@ -24,6 +25,8 @@ func main() {
 	}
 
 	app := fiber.New()
+	// recover mencegah panic di satu handler mematikan server.
+	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:5173,https://www.reihan.biz.id",
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",

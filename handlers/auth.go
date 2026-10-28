@@ -1,6 +1,11 @@
 package handlers
 
 import (
+	"context"
+	"log"
+	"time"
+
+	"github.com/ehanz12/BeforeYouLeave/configs"
 	"github.com/ehanz12/BeforeYouLeave/databases"
 	"github.com/ehanz12/BeforeYouLeave/dtos/request"
 	"github.com/ehanz12/BeforeYouLeave/mappers"
@@ -8,6 +13,7 @@ import (
 	"github.com/ehanz12/BeforeYouLeave/utils"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/api/idtoken"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -60,7 +66,9 @@ func Login(c *fiber.Ctx) error {
 
 	access_token, err := utils.GenerateJWT(exits.ID, exits.Email)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "error": "terjadi kesalahan sistem", "err" : err})
+		// Jangan bocorkan detail internal ke client, cukup log di server.
+		log.Printf("⚠️ gagal membuat JWT untuk user %d: %v", exits.ID, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "error": "gagal membuat token"})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": "Berhasil Login", "access_token": access_token})
@@ -72,11 +80,34 @@ func GoogleAuth(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "error": "id_token google wajib diisi"})
 	}
 
-	// Untuk keperluan integrasi & pengujian Google Auth
-	// Menerima Token dan melakukan Auto-login / Auto-register User
-	email := "user.google@example.com"
-	name := "Google User"
+	if configs.AppConfig.GoogleClientID == "" {
+		log.Println("⚠️ GOOGLE_CLIENT_ID belum di-set, verifikasi id_token tidak bisa dilakukan")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "error": "google auth belum dikonfigurasi"})
+	}
 
+	// Validasi tanda tangan + audience id_token ke Google.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	payload, err := idtoken.Validate(ctx, r.IDToken, configs.AppConfig.GoogleClientID)
+	if err != nil {
+		log.Printf("⚠️ id_token google tidak valid: %v", err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "error": "id_token google tidak valid"})
+	}
+
+	email, _ := payload.Claims["email"].(string)
+	name, _ := payload.Claims["name"].(string)
+	if email == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "error": "email tidak ditemukan di id_token"})
+	}
+	if verified, ok := payload.Claims["email_verified"].(bool); ok && !verified {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "error": "email google belum diverifikasi"})
+	}
+	if name == "" {
+		name = email
+	}
+
+	// Auto-login / auto-register berdasarkan email dari token yang sudah tervalidasi.
 	var user models.User
 	if err := databases.DB.Where("email = ?", email).First(&user).Error; err != nil {
 		user = models.User{
@@ -91,6 +122,7 @@ func GoogleAuth(c *fiber.Ctx) error {
 
 	token, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
+		log.Printf("⚠️ gagal membuat JWT untuk user google %d: %v", user.ID, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "error": "gagal membuat token jwt"})
 	}
 

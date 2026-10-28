@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b1f0c2a4-7d3e-4a9b-9c1f-0a2b3c4d5e6f",
     "name": "BeforeYouLeave",
-    "description": "Collection API Before You Leave (Fiber + GORM).\n\nBase URL default: http://localhost:3000/api\n\nAlur pemakaian:\n1. Jalankan Register (opsional) atau Login -> access_token otomatis tersimpan ke variabel {{token}}.\n2. Jalankan Create Destination -> id otomatis tersimpan ke variabel {{destination_id}}.\n3. Buat Checklist Item di folder \"Checklist Item\" (nested ke destination).\n4. Buat Jadwal di folder \"Schedule\" bisa pakai POST per hari atau PUT untuk replace-all (set sepekan sekaligus).\n5. Worker akan generate reminder otomatis (generator tiap 60 menit, dispatcher tiap 5 menit). Atau bisa diuji via test.\n6. Cek Reminder di folder \"Reminder\", tandai baca/skip, atau centang item per reminder.",
+    "description": "Collection API Before You Leave (Fiber + GORM).\n\nBase URL default: http://localhost:8080/api\n\nAlur pemakaian:\n1. Jalankan Register (opsional) atau Login -> access_token otomatis tersimpan ke variabel {{token}}.\n2. Jalankan Create Destination -> id otomatis tersimpan ke variabel {{destination_id}}.\n3. Buat Checklist Item di folder \"Checklist Item\" (nested ke destination).\n4. Buat Jadwal di folder \"Schedule\" bisa pakai POST per hari atau PUT untuk replace-all (set sepekan sekaligus).\n5. Worker akan generate reminder otomatis (generator tiap 60 menit, dispatcher tiap 5 menit). Atau bisa diuji via test.\n6. Cek Reminder di folder \"Reminder\", tandai baca/skip, atau centang item per reminder.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -1632,7 +1632,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000/api",
+      "value": "http://localhost:8080/api",
       "type": "string"
     },
     {
