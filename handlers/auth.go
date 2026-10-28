@@ -60,7 +60,7 @@ func Login(c *fiber.Ctx) error {
 
 	access_token, err := utils.GenerateJWT(exits.ID, exits.Email)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "error": "terjadi kesalahan sistem"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "error": "terjadi kesalahan sistem", "err" : err})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": "Berhasil Login", "access_token": access_token})
